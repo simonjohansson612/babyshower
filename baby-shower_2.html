@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJEKT: ADAM KLING</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060612;
+    --surface: #0e0e24;
+    --surface2: #161630;
+    --border: #1e1e42;
+    --cyan: #00ffd1;
+    --purple: #7b2fbe;
+    --purple-light: #a855f7;
+    --white: #e8e8f8;
+    --muted: #6b6b8a;
+    --red: #ff4466;
+    --green: #00ffd1;
+    --gold: #ffd700;
+    --easy: #22c55e;
+    --medium: #f59e0b;
+    --hard: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* CANVAS BACKGROUND */
+  #canvas-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ===== LANDING SCREEN ===== */
+  #screen-landing {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .landing-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 8px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 60px;
+    opacity: 0.7;
+  }
+
+  .landing-title {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(32px, 6vw, 64px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--white) 0%, var(--cyan) 50%, var(--purple-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-sub {
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 80px;
+  }
+
+  .landing-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-landing {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 18px 40px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+    overflow: hidden;
+  }
+
+  .btn-landing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--cyan)15, var(--purple)15);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-landing:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 30px var(--cyan)30, inset 0 0 30px var(--cyan)08;
+  }
+
+  .btn-landing:hover::before { opacity: 1; }
+
+  .btn-landing.primary {
+    border-color: var(--cyan)60;
+    color: var(--cyan);
+  }
+
+  .btn-landing.secondary {
+    border-color: var(--purple)60;
+    color: var(--purple-light);
+  }
+  .btn-landing.secondary:hover {
+    border-color: var(--purple-light);
+    color: var(--purple-light);
+    box-shadow: 0 0 30px var(--purple)40;
+  }
+
+  /* SCANLINE effect */
+  .scanline {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ===== ADMIN SCREEN ===== */
+  #screen-admin {
+    padding: 40px 24px 80px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .admin-header h2 {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .btn-back {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .btn-back:hover { color: var(--white); border-color: var(--muted); }
+
+  .challenge-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .challenge-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--cyan);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-input, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .form-input:focus, .form-textarea:focus {
+    border-color: var(--cyan)60;
+  }
+  .form-textarea { min-height: 100px; }
+
+  .category-select {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cat-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    background: transparent;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .cat-btn[data-cat="easy"].active { border-color: var(--easy); color: var(--easy); background: var(--easy)15; }
+  .cat-btn[data-cat="medium"].active { border-color: var(--medium); color: var(--medium); background: var(--medium)15; }
+  .cat-btn[data-cat="hard"].active { border-color: var(--hard); color: var(--hard); background: var(--hard)15; }
+  .cat-btn:hover { border-color: var(--muted); color: var(--white); }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #00e5bb; }
+
+  .btn-secondary {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    background: transparent;
+    color: var(--white);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--white); }
+
+  .btn-danger {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red)40;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { background: var(--red)15; border-color: var(--red); }
+
+  /* Saved challenges list */
+  .saved-list {
+    margin-top: 32px;
+  }
+  .saved-list h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .challenge-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    background: var(--surface);
+  }
+
+  .challenge-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 30px;
+    padding-top: 2px;
+  }
+
+  .challenge-text { flex: 1; font-size: 14px; line-height: 1.5; }
+
+  .cat-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .cat-badge.easy { color: var(--easy); border: 1px solid var(--easy)50; }
+  .cat-badge.medium { color: var(--medium); border: 1px solid var(--medium)50; }
+  .cat-badge.hard { color: var(--hard); border: 1px solid var(--hard)50; }
+
+  .archive-section {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .archive-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .archive-header h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .collapsible { display: none; }
+  .collapsible.open { display: block; }
+
+  /* ===== ADAM SCREEN ===== */
+  #screen-adam {
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 24px;
+    text-align: center;
+    position: relative;
+  }
+
+  .adam-inner {
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .typewriter-wrap {
+    margin-bottom: 60px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .typewriter-text {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(14px, 2.5vw, 18px);
+    line-height: 1.8;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan)60;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2em;
+    background: var(--cyan);
+    vertical-align: text-bottom;
+    animation: blink 0.8s step-end infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .score-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+  }
+
+  .score-display span {
+    color: var(--gold);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .difficulty-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .btn-diff {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 18px 32px;
+    background: transparent;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-diff::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-diff.easy { border-color: var(--easy)60; color: var(--easy); }
+  .btn-diff.easy:hover { box-shadow: 0 0 30px var(--easy)40; border-color: var(--easy); }
+  .btn-diff.medium { border-color: var(--medium)60; color: var(--medium); }
+  .btn-diff.medium:hover { box-shadow: 0 0 30px var(--medium)40; border-color: var(--medium); }
+  .btn-diff.hard { border-color: var(--hard)60; color: var(--hard); }
+  .btn-diff.hard:hover { box-shadow: 0 0 30px var(--hard)40; border-color: var(--hard); }
+
+  .btn-diff:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-finish {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-finish:hover { color: var(--gold); border-color: var(--gold)60; }
+
+  .btn-voice-replay {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 20px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin: -32px auto 32px;
+    display: block;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .btn-voice-replay:hover {
+    border-color: var(--cyan)60;
+    color: var(--cyan);
+    box-shadow: 0 0 16px var(--cyan)30;
+  }
+
+  /* ===== CHALLENGE REVEAL SCREEN ===== */
+  #screen-challenge {
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 24px;
+    text-align: center;
+    position: relative;
+  }
+
+  .challenge-card {
+    max-width: 600px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 48px 40px;
+    position: relative;
+  }
+
+  .challenge-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  .challenge-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .challenge-title {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .challenge-title.easy { color: var(--easy); }
+  .challenge-title.medium { color: var(--medium); }
+  .challenge-title.hard { color: var(--hard); }
+
+  .challenge-text-display {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(15px, 2.5vw, 20px);
+    line-height: 1.7;
+    color: var(--white);
+    margin-bottom: 48px;
+  }
+
+  .outcome-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-success {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    background: transparent;
+    color: var(--green);
+    border: 1px solid var(--green)60;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-success:hover { background: var(--green)15; box-shadow: 0 0 30px var(--green)30; border-color: var(--green); }
+
+  .btn-fail {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red)60;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-fail:hover { background: var(--red)15; box-shadow: 0 0 30px var(--red)30; border-color: var(--red); }
+
+  /* FEEDBACK OVERLAY */
+  .feedback-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6,6,18,0.9);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    padding: 40px;
+  }
+  .feedback-overlay.show { display: flex; }
+
+  .feedback-inner { max-width: 500px; }
+
+  .feedback-emoji {
+    font-size: 64px;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  .feedback-msg {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(16px, 3vw, 24px);
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+  .feedback-msg.success { color: var(--green); text-shadow: 0 0 30px var(--green)60; }
+  .feedback-msg.fail { color: var(--red); text-shadow: 0 0 30px var(--red)60; }
+
+  .feedback-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 0.2s;
+  }
+  .feedback-btn:hover { background: #00e5bb; }
+
+  /* ===== SCOREBOARD ===== */
+  #screen-score {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    text-align: center;
+    position: relative;
+  }
+
+  .score-inner { max-width: 700px; width: 100%; padding-bottom: 40px; }
+
+  .score-title {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .score-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .big-score {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(64px, 15vw, 120px);
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 60px var(--gold)40;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .score-label {
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .results-list {
+    text-align: left;
+    margin-bottom: 40px;
+  }
+
+  .results-list h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    background: var(--surface);
+  }
+
+  .result-icon { font-size: 18px; min-width: 24px; text-align: center; }
+  .result-text { flex: 1; font-size: 14px; line-height: 1.4; }
+  .result-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .result-status.ok { color: var(--green); }
+  .result-status.fail { color: var(--red); }
+
+  /* CONFETTI */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    z-index: 200;
+    pointer-events: none;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--cyan)40;
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 14px 24px;
+    z-index: 500;
+    transition: transform 0.4s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* NO CHALLENGES WARNING */
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border: 1px dashed var(--border);
+  }
+
+  .glitch {
+    animation: glitch 3s infinite;
+  }
+  @keyframes glitch {
+    0%,90%,100% { text-shadow: none; }
+    92% { text-shadow: 2px 0 var(--cyan), -2px 0 var(--purple-light); }
+    94% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--purple-light); }
+    96% { text-shadow: none; }
+  }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 600px) {
+
+    /* Landing */
+    #screen-landing { padding: 40px 20px; justify-content: center; }
+    .landing-logo { font-size: 9px; letter-spacing: 4px; margin-bottom: 36px; }
+    .landing-sub { font-size: 10px; letter-spacing: 2px; margin-bottom: 48px; }
+    .landing-buttons { flex-direction: column; align-items: stretch; gap: 12px; width: 100%; max-width: 280px; }
+    .btn-landing { padding: 18px 24px; font-size: 12px; letter-spacing: 2px; min-height: 56px; }
+
+    /* Admin */
+    #screen-admin { padding: 20px 16px; }
+    .admin-header { margin-bottom: 24px; }
+    .admin-header h2 { font-size: 10px; letter-spacing: 3px; }
+    .challenge-form { padding: 20px 16px; }
+    .form-actions { flex-direction: column; }
+    .btn-primary, .btn-secondary, .btn-danger { width: 100%; text-align: center; min-height: 52px; padding: 14px 16px; font-size: 11px; }
+    .category-select { gap: 8px; }
+    .cat-btn { flex: 1; text-align: center; padding: 12px 8px; font-size: 10px; min-height: 48px; }
+    .challenge-item { flex-wrap: wrap; gap: 8px; }
+    .cat-badge { align-self: flex-start; }
+    .archive-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+    /* Adam screen */
+    #screen-adam { padding: 80px 20px 40px; justify-content: center; }
+    .typewriter-wrap { margin-bottom: 36px; min-height: 100px; }
+    .typewriter-text { font-size: 15px; line-height: 1.7; }
+    .score-display { font-size: 12px; letter-spacing: 2px; margin-bottom: 28px; }
+    .score-display span { font-size: 22px; }
+    .difficulty-buttons { flex-direction: column; align-items: stretch; gap: 12px; width: 100%; max-width: 300px; margin: 0 auto 28px; }
+    .btn-diff { padding: 18px 24px; font-size: 13px; letter-spacing: 2px; min-height: 58px; }
+    .btn-finish { width: 100%; max-width: 300px; min-height: 48px; font-size: 11px; }
+
+    /* Challenge screen */
+    #screen-challenge { padding: 80px 16px 40px; }
+    .challenge-card { padding: 32px 20px; }
+    .challenge-text-display { font-size: 16px; margin-bottom: 36px; }
+    .outcome-buttons { flex-direction: column; gap: 12px; }
+    .btn-success, .btn-fail { width: 100%; min-height: 56px; font-size: 13px; padding: 16px; }
+
+    /* Feedback overlay */
+    .feedback-overlay { padding: 24px 20px; }
+    .feedback-emoji { font-size: 52px; margin-bottom: 16px; }
+    .feedback-msg { font-size: 18px; margin-bottom: 24px; }
+    .feedback-btn { width: 100%; min-height: 52px; }
+
+    /* Scoreboard */
+    #screen-score { padding: 80px 16px 40px; }
+    .score-subtitle { font-size: 9px; letter-spacing: 3px; margin-bottom: 28px; }
+    .score-label { font-size: 11px; letter-spacing: 2px; margin-bottom: 32px; }
+    .result-item { flex-wrap: wrap; gap: 8px; padding: 12px; }
+    .result-text { font-size: 13px; width: 100%; }
+    .result-status { margin-left: auto; }
+    .btn-primary { width: 100%; min-height: 52px; }
+
+    /* Toast wider on mobile */
+    .toast { white-space: normal; text-align: center; width: calc(100% - 32px); font-size: 11px; letter-spacing: 1px; bottom: 24px; }
+
+    /* Back button always visible */
+    .btn-back { padding: 10px 14px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<canvas id="canvas-bg"></canvas>
+
+<!-- LANDING -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-logo">// System Boot 2025 //</div>
+  <h1 class="landing-title glitch">PROJEKT:<br>ADAM KLING</h1>
+  <p class="landing-sub">Baby Shower · Operation Classified</p>
+  <div class="landing-buttons">
+    <button class="btn-landing primary" onclick="goTo('admin')">⬡ Admin</button>
+    <button class="btn-landing secondary" onclick="goTo('adam')">◈ Adam Kling</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <div class="admin-header">
+    <h2>// Admin Console</h2>
+    <button class="btn-back" onclick="goTo('landing')">← Tillbaka</button>
+  </div>
+
+  <div class="challenge-form">
+    <div class="challenge-counter" id="challenge-counter">Utmaning 01 / 50</div>
+    <div class="form-group">
+      <label class="form-label">Utmaning</label>
+      <textarea class="form-textarea" id="challenge-input" placeholder="Beskriv utmaningen..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kategori</label>
+      <div class="category-select">
+        <button class="cat-btn" data-cat="easy" onclick="selectCat('easy')">Lätt</button>
+        <button class="cat-btn" data-cat="medium" onclick="selectCat('medium')">Medium</button>
+        <button class="cat-btn" data-cat="hard" onclick="selectCat('hard')">Svår</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="addChallenge()">+ Lägg till nästa</button>
+      <button class="btn-secondary" onclick="saveAll()">✓ Spara alla</button>
+    </div>
+  </div>
+
+  <div class="form-actions" style="margin-bottom:32px; gap:12px; flex-wrap:wrap;">
+    <button class="btn-danger" onclick="clearChallenges()">✕ Rensa utmaningar</button>
+  </div>
+
+  <div class="saved-list" id="saved-list-wrap"></div>
+
+  <div class="archive-section" id="archive-section" style="display:none;">
+    <div class="archive-header">
+      <h3>// Arkiv — Tidigare utmaningar</h3>
+      <button class="btn-secondary" onclick="toggleArchive()" id="archive-toggle-btn" style="padding:8px 16px; font-size:11px;">Visa arkiv</button>
+    </div>
+    <div class="collapsible" id="archive-list"></div>
+    <div style="margin-top:16px;">
+      <button class="btn-secondary" onclick="restoreArchive()" style="font-size:11px; padding:10px 20px;">↩ Lägg till gamla utmaningar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADAM WELCOME -->
+<div id="screen-adam" class="screen">
+  <div style="position:absolute; top:24px; left:24px; z-index:10;">
+    <button class="btn-back" onclick="goTo('landing')">← Tillbaka</button>
+  </div>
+  <div class="adam-inner">
+    <div class="typewriter-wrap">
+      <div class="typewriter-text" id="typewriter-el"><span class="cursor"></span></div>
+    </div>
+    <button class="btn-voice-replay" id="btn-voice-replay" onclick="speakAdamMsg()" title="Spela upp rösten igen">🔊</button>
+    <div class="score-display">Poäng: <span id="adam-score-display">0</span></div>
+    <div class="difficulty-buttons" id="diff-buttons">
+      <button class="btn-diff easy" onclick="pickChallenge('easy')">Lätt</button>
+      <button class="btn-diff medium" onclick="pickChallenge('medium')">Medium</button>
+      <button class="btn-diff hard" onclick="pickChallenge('hard')">Svår</button>
+    </div>
+    <button class="btn-finish" onclick="finishGame()">→ Klar med alla utmaningar</button>
+  </div>
+</div>
+
+<!-- CHALLENGE REVEAL -->
+<div id="screen-challenge" class="screen">
+  <div style="position:absolute; top:24px; left:24px; z-index:10;">
+    <button class="btn-back" onclick="goTo('adam')">← Tillbaka</button>
+  </div>
+  <div class="challenge-card">
+    <div class="challenge-label">// Utmaning tilldelad //</div>
+    <div class="challenge-title" id="c-difficulty-label">Svår</div>
+    <div class="challenge-text-display" id="c-text">—</div>
+    <div class="outcome-buttons">
+      <button class="btn-success" onclick="resolveChallenge(true)">✓ Lyckats</button>
+      <button class="btn-fail" onclick="resolveChallenge(false)">✕ Misslyckats</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div id="screen-score" class="screen">
+  <div style="position:absolute; top:24px; left:24px; z-index:10;">
+    <button class="btn-back" onclick="goTo('adam')">← Tillbaka</button>
+  </div>
+  <div class="score-inner">
+    <h1 class="score-title">UPPDRAG SLUTFÖRT</h1>
+    <p class="score-subtitle">// Game Over · Results //</p>
+    <div class="big-score" id="final-score">0</div>
+    <div class="score-label">poäng totalt</div>
+    <div class="results-list" id="results-list"></div>
+    <button class="btn-primary" onclick="restartGame()">↺ Spela igen</button>
+  </div>
+</div>
+
+<!-- FEEDBACK OVERLAY -->
+<div class="feedback-overlay" id="feedback-overlay">
+  <div class="feedback-inner">
+    <span class="feedback-emoji" id="feedback-emoji">🎉</span>
+    <div class="feedback-msg" id="feedback-msg"></div>
+    <button class="feedback-btn" onclick="closeFeedback()">Fortsätt →</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let pendingChallenges = []; // challenges being built in admin
+let selectedCat = null;
+let currentChallenge = null;
+let score = 0;
+let results = [];
+let typewriterDone = false;
+
+// ============================================================
+// CANVAS BACKGROUND — particle field
+// ============================================================
+const canvas = document.getElementById('canvas-bg');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initParticles() {
+  particles = [];
+  const count = Math.floor((canvas.width * canvas.height) / 12000);
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.3,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      a: Math.random() * 0.6 + 0.1,
+      color: Math.random() > 0.7 ? '#00ffd1' : '#7b2fbe'
+    });
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color + Math.floor(p.a * 255).toString(16).padStart(2,'0');
+    ctx.fill();
+  });
+  // draw faint lines between close particles
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 100) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(0,255,209,${0.06 * (1 - dist/100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+
+resizeCanvas(); initParticles(); animateParticles();
+window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screenId).classList.add('active');
+  if (screenId === 'admin') renderAdminList();
+  if (screenId === 'adam') initAdamScreen();
+}
+
+// ============================================================
+// STORAGE HELPERS
+// ============================================================
+function getChallenges() {
+  return JSON.parse(localStorage.getItem('challenges') || '[]');
+}
+function saveChallenges(list) {
+  localStorage.setItem('challenges', JSON.stringify(list));
+}
+function getArchive() {
+  return JSON.parse(localStorage.getItem('challenges_archive') || '[]');
+}
+function saveArchive(list) {
+  localStorage.setItem('challenges_archive', JSON.stringify(list));
+}
+function getGameState() {
+  return JSON.parse(localStorage.getItem('game_state') || '{"score":0,"results":[],"used":[]}');
+}
+function saveGameState(state) {
+  localStorage.setItem('game_state', JSON.stringify(state));
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function selectCat(cat) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.cat-btn[data-cat="${cat}"]`).classList.add('active');
+}
+
+function addChallenge() {
+  const text = document.getElementById('challenge-input').value.trim();
+  if (!text) { showToast('Fyll i en utmaning först'); return; }
+  if (!selectedCat) { showToast('Välj en kategori'); return; }
+  if (pendingChallenges.length >= 50) { showToast('Max 50 utmaningar'); return; }
+
+  pendingChallenges.push({ text, cat: selectedCat, id: Date.now() });
+  document.getElementById('challenge-input').value = '';
+  selectedCat = null;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  updateCounter();
+  renderAdminList();
+  showToast('Utmaning tillagd!');
+}
+
+function updateCounter() {
+  const n = pendingChallenges.length + 1;
+  document.getElementById('challenge-counter').textContent =
+    'Utmaning ' + String(n).padStart(2,'0') + ' / 50';
+}
+
+function saveAll() {
+  if (pendingChallenges.length === 0) { showToast('Inga utmaningar att spara'); return; }
+  // archive current
+  const existing = getChallenges();
+  if (existing.length > 0) {
+    const archive = getArchive();
+    archive.push({ timestamp: new Date().toISOString(), challenges: existing });
+    saveArchive(archive);
+  }
+  saveChallenges(pendingChallenges);
+  pendingChallenges = [];
+  updateCounter();
+  renderAdminList();
+  showToast('✓ Sparade!');
+}
+
+function clearChallenges() {
+  if (!confirm('Är du säker? Utmaningarna arkiveras.')) return;
+  const existing = getChallenges();
+  if (existing.length > 0) {
+    const archive = getArchive();
+    archive.push({ timestamp: new Date().toISOString(), challenges: existing });
+    saveArchive(archive);
+  }
+  saveChallenges([]);
+  pendingChallenges = [];
+  updateCounter();
+  renderAdminList();
+  showToast('Utmaningar rensade & arkiverade');
+}
+
+function renderAdminList() {
+  const wrap = document.getElementById('saved-list-wrap');
+  const saved = getChallenges();
+  const allItems = [...pendingChallenges, ...saved];
+
+  if (allItems.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Inga utmaningar ännu</div>';
+  } else {
+    const catLabel = { easy: 'Lätt', medium: 'Medium', hard: 'Svår' };
+    const pending = pendingChallenges.map((c, i) => `
+      <div class="challenge-item" style="opacity:0.7; border-style:dashed;">
+        <span class="challenge-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="challenge-text">${c.text}</span>
+        <span class="cat-badge ${c.cat}">${catLabel[c.cat]}</span>
+        <span style="font-size:10px; color:var(--muted); margin-left:4px;">[ej sparad]</span>
+      </div>`).join('');
+
+    const savedHtml = saved.map((c, i) => `
+      <div class="challenge-item">
+        <span class="challenge-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="challenge-text">${c.text}</span>
+        <span class="cat-badge ${c.cat}">${catLabel[c.cat]}</span>
+      </div>`).join('');
+
+    wrap.innerHTML = `
+      <div>
+        <h3 style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:4px; color:var(--muted); text-transform:uppercase; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border);">// Aktiva utmaningar (${saved.length})</h3>
+        ${savedHtml || '<div class="empty-state">Inga sparade</div>'}
+        ${pending ? `<h3 style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:4px; color:var(--medium); text-transform:uppercase; margin:20px 0 12px; padding-bottom:12px; border-bottom:1px solid var(--border);">// Ej sparade (${pendingChallenges.length})</h3>${pending}` : ''}
+      </div>`;
+  }
+
+  // archive
+  const archive = getArchive();
+  const archiveSec = document.getElementById('archive-section');
+  if (archive.length > 0) {
+    archiveSec.style.display = 'block';
+    renderArchiveList();
+  } else {
+    archiveSec.style.display = 'none';
+  }
+}
+
+function toggleArchive() {
+  const el = document.getElementById('archive-list');
+  const btn = document.getElementById('archive-toggle-btn');
+  el.classList.toggle('open');
+  btn.textContent = el.classList.contains('open') ? 'Dölj arkiv' : 'Visa arkiv';
+}
+
+function renderArchiveList() {
+  const archive = getArchive();
+  const catLabel = { easy: 'Lätt', medium: 'Medium', hard: 'Svår' };
+  let html = '';
+  archive.forEach((batch, bi) => {
+    const d = new Date(batch.timestamp).toLocaleDateString('sv-SE');
+    html += `<div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:8px; text-transform:uppercase;">Batch ${bi+1} — ${d}</div>`;
+    batch.challenges.forEach((c, i) => {
+      html += `<div class="challenge-item" style="opacity:0.6;">
+        <span class="challenge-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="challenge-text">${c.text}</span>
+        <span class="cat-badge ${c.cat}">${catLabel[c.cat]}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('archive-list').innerHTML = html;
+}
+
+function restoreArchive() {
+  const archive = getArchive();
+  if (archive.length === 0) { showToast('Inget i arkivet'); return; }
+  const last = archive[archive.length - 1];
+  const current = getChallenges();
+  const merged = [...current, ...last.challenges];
+  saveChallenges(merged);
+  renderAdminList();
+  showToast(`↩ Återställde ${last.challenges.length} utmaningar`);
+}
+
+// ============================================================
+// ADAM SCREEN
+// ============================================================
+function initAdamScreen() {
+  const state = getGameState();
+  score = state.score;
+  results = state.results;
+  document.getElementById('adam-score-display').textContent = score;
+  updateDiffButtons();
+
+  if (!typewriterDone) {
+    runTypewriter();
+    typewriterDone = true;
+  }
+}
+
+const ADAM_MSG = 'Hello Adam Kling. Welcome to your Baby Shower. Buckle up... because we are about to take off.';
+
+function speakAdamMsg() {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(ADAM_MSG);
+  utter.lang = 'en-US';
+
+  const voices = window.speechSynthesis.getVoices();
+
+  // Priority: deep English male voices
+  const preferred =
+    voices.find(v => /en/i.test(v.lang) && /daniel|alex|fred|bruce|ralph|thomas|google uk english male/i.test(v.name)) ||
+    voices.find(v => /en/i.test(v.lang) && /male/i.test(v.name)) ||
+    voices.find(v => /en-US/i.test(v.lang)) ||
+    voices.find(v => /en/i.test(v.lang)) ||
+    voices[0];
+
+  if (preferred) utter.voice = preferred;
+
+  utter.pitch  = 0.1;   // as deep as possible
+  utter.rate   = 0.68;  // slow, deliberate
+  utter.volume = 1;
+
+  window.speechSynthesis.speak(utter);
+}
+
+function runTypewriter() {
+  const el = document.getElementById('typewriter-el');
+  let i = 0;
+  el.innerHTML = '<span class="cursor"></span>';
+
+  // Kick off voice in parallel — requires a user gesture (the button click) to work on mobile
+  speakAdamMsg();
+
+  function type() {
+    if (i < ADAM_MSG.length) {
+      el.innerHTML = ADAM_MSG.substring(0, i + 1) + '<span class="cursor"></span>';
+      i++;
+      setTimeout(type, 45 + Math.random() * 30);
+    } else {
+      el.innerHTML = ADAM_MSG + '<span class="cursor"></span>';
+    }
+  }
+  setTimeout(type, 600);
+}
+
+function updateDiffButtons() {
+  const challenges = getChallenges();
+  const state = getGameState();
+  const used = state.used || [];
+  const remaining = challenges.filter(c => !used.includes(c.id));
+
+  ['easy', 'medium', 'hard'].forEach(cat => {
+    const hasAny = remaining.some(c => c.cat === cat);
+    const btn = document.querySelector(`.btn-diff.${cat}`);
+    if (btn) btn.disabled = !hasAny;
+  });
+}
+
+function pickChallenge(cat) {
+  const challenges = getChallenges();
+  const state = getGameState();
+  const used = state.used || [];
+  const pool = challenges.filter(c => c.cat === cat && !used.includes(c.id));
+
+  if (pool.length === 0) { showToast('Inga fler utmaningar i den kategorin!'); return; }
+
+  currentChallenge = pool[Math.floor(Math.random() * pool.length)];
+
+  const catLabel = { easy: 'Lätt', medium: 'Medium', hard: 'Svår' };
+  document.getElementById('c-difficulty-label').textContent = catLabel[cat];
+  document.getElementById('c-difficulty-label').className = 'challenge-title ' + cat;
+  document.getElementById('c-text').textContent = currentChallenge.text;
+
+  goTo('challenge');
+}
+
+function resolveChallenge(success) {
+  const state = getGameState();
+  state.used = state.used || [];
+  state.used.push(currentChallenge.id);
+
+  const catLabel = { easy: 'Lätt', medium: 'Medium', hard: 'Svår' };
+  const points = currentChallenge.cat === 'hard' ? 3 : currentChallenge.cat === 'medium' ? 2 : 1;
+
+  if (success) state.score += points;
+
+  state.results.push({
+    text: currentChallenge.text,
+    cat: currentChallenge.cat,
+    success
+  });
+
+  saveGameState(state);
+  score = state.score;
+  results = state.results;
+
+  // show feedback
+  const overlay = document.getElementById('feedback-overlay');
+  const msg = document.getElementById('feedback-msg');
+  const emoji = document.getElementById('feedback-emoji');
+  overlay.classList.add('show');
+
+  if (success) {
+    emoji.textContent = '🏆';
+    msg.textContent = `Snyggt jobbat Adam! +${points} poäng`;
+    msg.className = 'feedback-msg success';
+    launchConfetti();
+  } else {
+    emoji.textContent = '💀';
+    msg.textContent = 'Ingen fara, nästa gång sitter den!';
+    msg.className = 'feedback-msg fail';
+  }
+}
+
+function closeFeedback() {
+  document.getElementById('feedback-overlay').classList.remove('show');
+  document.getElementById('adam-score-display').textContent = score;
+  updateDiffButtons();
+  goTo('adam');
+}
+
+function finishGame() {
+  const state = getGameState();
+  const finalScore = state.score;
+  document.getElementById('final-score').textContent = finalScore;
+
+  const listEl = document.getElementById('results-list');
+  const catLabel = { easy: 'Lätt', medium: 'Medium', hard: 'Svår' };
+
+  if (state.results.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">Inga utmaningar genomförda</div>';
+  } else {
+    const items = state.results.map(r => `
+      <div class="result-item">
+        <span class="result-icon">${r.success ? '✓' : '✕'}</span>
+        <span class="result-text">
+          ${r.text}
+          <span class="cat-badge ${r.cat}" style="margin-left:8px;">${catLabel[r.cat]}</span>
+        </span>
+        <span class="result-status ${r.success ? 'ok' : 'fail'}">${r.success ? 'Lyckats' : 'Misslyckats'}</span>
+      </div>`).join('');
+    listEl.innerHTML = `<h3>// Utmaningar</h3>${items}`;
+  }
+
+  goTo('score');
+  if (finalScore > 0) setTimeout(launchConfetti, 300);
+}
+
+function restartGame() {
+  localStorage.removeItem('game_state');
+  score = 0; results = [];
+  typewriterDone = false;
+  goTo('adam');
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function launchConfetti() {
+  const colors = ['#00ffd1','#7b2fbe','#ffd700','#ff4466','#a855f7','#22c55e'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const size = 6 + Math.random() * 10;
+      piece.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        width: ${size}px; height: ${size}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+        animation-duration: ${1.5 + Math.random() * 2}s;
+        animation-delay: 0s;
+        opacity: 1;
+      `;
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4000);
+    }, i * 25);
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderAdminList();
+
+// Pre-load voices so they're ready when Adam screen opens
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>
